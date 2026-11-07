@@ -2,10 +2,12 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { platform } from "@platform";
 import type { Card, Library, UserFields } from "../lib/types";
 import { effectiveAction, effectiveTags, effectiveTopic, getOwnTopics, matchesFilter, tagName, topicName } from "../lib/library";
-import { countDuplicateGroups, findDuplicates, groupDuplicates, isImportant } from "../lib/smart";
+import { countDuplicateGroups, findDuplicates, groupDuplicates, isImportant, isUnsorted } from "../lib/smart";
 import { Overview, type OverviewSection } from "./Overview";
 import { TidyDialog, type TidyKind } from "./TidyDialog";
 import { TopicMenu } from "./TopicMenu";
+import { TodayDialog } from "./TodayDialog";
+import { candidates, localDate, makePlan, planFor, resolvePlan, withSkip, type DailyTask, type Skips, type TodayState } from "../lib/today";
 import { suggestMerges } from "../lib/tidy";
 import type { Aliases } from "../lib/library";
 import { buildIndex } from "../lib/search";
@@ -89,6 +91,10 @@ export function Workspace(props: {
   onCreateTopic: (name: string) => Promise<string>;
   onRenameTopic: (from: string, to: string) => Promise<string>;
   onDeleteTopic: (name: string) => Promise<void>;
+  /** "Three for today": the saved plan, the tasks set aside, and saving either. */
+  today?: TodayState;
+  taskSkips: Skips;
+  onToday: (p: { today?: TodayState; skips?: Skips }) => void;
 }) {
   const { lib, rev, onEdit } = props;
   const [scope, setScope] = useState<Scope>({ kind: "home" });
@@ -123,6 +129,8 @@ export function Workspace(props: {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [exportOpen, setExportOpen] = useState(false);
   const [tidy, setTidy] = useState<TidyKind | null>(null);
+  /** The open "Three for today" dialog: the tasks it started with and where. */
+  const [todayOpen, setTodayOpen] = useState<{ tasks: DailyTask[]; start: number; n: number } | null>(null);
   const [bulkMoveAt, setBulkMoveAt] = useState<HTMLElement | null>(null);
   /** The open subgroup of the topic, by name, and whether the AI is grouping right now. */
   const [sub, setSub] = useState<string | null>(null);
@@ -218,6 +226,52 @@ export function Workspace(props: {
     return { topics, tags };
   }, [lib, rev]); // eslint-disable-line react-hooks/exhaustive-deps
   const topicNames = useMemo(() => [...new Set([...names.topics.keys(), ...getOwnTopics()])], [names]);
+
+  // "Three for today" (lib/today.ts). The plan is fixed for the day; a new day makes a new one.
+  const day = localDate();
+  const plan = useMemo(() => planFor(props.today, lib.cards, props.taskSkips, day), [props.today, lib, rev, props.taskSkips, day]); // eslint-disable-line react-hooks/exhaustive-deps
+  const planRef = useRef(plan);
+  planRef.current = plan;
+  const skipsRef = useRef(props.taskSkips);
+  skipsRef.current = props.taskSkips;
+  useEffect(() => {
+    if (plan !== props.today && plan.keys.length) props.onToday({ today: plan });
+  }, [plan]); // eslint-disable-line react-hooks/exhaustive-deps
+  const todayTasks = useMemo(() => resolvePlan(plan, lib.cards, props.taskSkips, day), [plan, lib, rev, props.taskSkips, day]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function saveDone(key: string, done: boolean) {
+    const p = planRef.current;
+    const next = { ...p, done: done ? [...new Set([...p.done, key])] : p.done.filter((k) => k !== key) };
+    planRef.current = next;
+    props.onToday({ today: next });
+  }
+
+  function skipTask(key: string, how?: "week" | "never" | number) {
+    if (!how) return;
+    const next = withSkip(skipsRef.current, key, day, how === "never" ? true : how === "week" ? false : how);
+    skipsRef.current = next;
+    props.onToday({ skips: next });
+  }
+
+  function openToday(start: number) {
+    const pending = todayTasks.filter((t): t is DailyTask => !!t);
+    if (!pending.length) return;
+    // Start on the one clicked, then the rest in order, coming round to the ones before it.
+    const at = Math.max(0, todayTasks[start] ? pending.indexOf(todayTasks[start]!) : 0);
+    setTodayOpen({ tasks: [...pending.slice(at), ...pending.slice(0, at)], start: 0, n: (todayOpen?.n ?? 0) + 1 });
+  }
+
+  /** Three more after the day's plan: tomorrow's work, today. */
+  function moreToday() {
+    const p = planRef.current;
+    const fresh = makePlan(lib.cards, skipsRef.current, day, p.keys);
+    if (!fresh.keys.length) return;
+    const next = { ...p, keys: [...p.keys, ...fresh.keys] };
+    planRef.current = next;
+    props.onToday({ today: next });
+    const all = new Map(candidates(lib.cards, skipsRef.current, day).map((t) => [t.key, t]));
+    setTodayOpen({ tasks: fresh.keys.map((k) => all.get(k)!).filter(Boolean), start: 0, n: (todayOpen?.n ?? 0) + 1 });
+  }
   const tidyCount = useMemo(() => suggestMerges(names.topics).length + suggestMerges(names.tags).length, [names]);
 
   const inScope = useMemo(() => base.filter((c) => matchesScope(c, shown, dupes)), [base, JSON.stringify(shown), dupes]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -474,6 +528,9 @@ export function Workspace(props: {
             topics={topics}
             tidyCount={tidyCount}
             onTidy={() => setTidy(suggestMerges(names.topics).length ? "topics" : "tags")}
+            today={plan.keys.length ? todayTasks : undefined}
+            onToday={openToday}
+            onTodayMore={candidates(lib.cards, props.taskSkips, day).some((t) => !plan.keys.includes(t.key)) ? moreToday : undefined}
             activeId={openId}
             onScope={pickScope}
             onOpen={(c) => setOpenId(c.id)}
@@ -575,6 +632,26 @@ export function Workspace(props: {
           askAi={props.askSynonyms}
           onChange={props.onAliases}
           onClose={() => setTidy(null)}
+        />
+      )}
+
+      {todayOpen && (
+        <TodayDialog
+          key={todayOpen.n}
+          lib={lib}
+          tasks={todayOpen.tasks}
+          start={todayOpen.start}
+          topics={topicNames}
+          onEdit={onEdit}
+          onDone={(key, skip) => (saveDone(key, true), skipTask(key, skip))}
+          onReopen={(key) => saveDone(key, false)}
+          onSkipGroup={(key, days) => skipTask(key, days ?? "never")}
+          left={() => {
+            const live = lib.cards.filter((c) => !c.removed && matchesFilter(c, "all"));
+            return { unsorted: live.filter(isUnsorted).length, dupes: countDuplicateGroups(live, findDuplicates(live)) };
+          }}
+          onMore={candidates(lib.cards, props.taskSkips, day).some((t) => !plan.keys.includes(t.key)) ? moreToday : undefined}
+          onClose={() => setTodayOpen(null)}
         />
       )}
 

@@ -2399,6 +2399,312 @@ button.ov-title:hover {
   min-width: 0;
 }
 
+/* Three for today: the banner on the overview */
+.today-banner {
+  margin-top: 12px;
+  padding: 14px 16px 10px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  max-width: 760px;
+}
+.today-banner.done {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: var(--muted);
+  box-shadow: none;
+  background: transparent;
+  border: 1px solid var(--line);
+}
+.today-banner.done .icon {
+  color: var(--ok);
+}
+.today-banner.done span {
+  flex: 1;
+}
+.today-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 6px;
+}
+.today-ring {
+  transform: rotate(-90deg);
+  flex-shrink: 0;
+}
+.today-ring circle {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 3;
+}
+.today-ring circle.fill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.4s ease;
+}
+.today-titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.today-titles h2 {
+  margin: 0;
+  font-size: 15px;
+}
+.today-titles .hint {
+  font-variant-numeric: tabular-nums;
+}
+.today-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.today-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+.today-row:hover {
+  background: var(--hover);
+}
+.today-row .label {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.today-row small,
+.today-row > .icon {
+  color: var(--muted);
+}
+.today-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--hover);
+  color: var(--ink);
+}
+.today-icon.dupes {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+/* Three for today: the dialog */
+.modal.today {
+  width: min(680px, 92vw);
+  gap: 16px;
+}
+.today-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.today-steps {
+  display: flex;
+  gap: 6px;
+}
+.today-steps span {
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+}
+.today-steps span.on {
+  background: var(--ink);
+}
+.today-count {
+  flex: 1;
+  font-variant-numeric: tabular-nums;
+}
+.today-skip {
+  color: var(--muted);
+}
+kbd {
+  font: inherit;
+  font-size: 11px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-left: 4px;
+}
+.today-q h2 {
+  margin: 0 0 4px;
+  font-size: 19px;
+  text-wrap: balance;
+}
+.today-q h2:focus {
+  outline: none;
+}
+.today-q .hint {
+  margin: 0;
+  text-wrap: pretty;
+}
+.today-cards {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+.today-cards .hover-actions {
+  display: none;
+}
+.today-cards .card {
+  cursor: default;
+}
+.today-one {
+  width: min(300px, 100%);
+  margin: 0 auto;
+}
+.today-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.today-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.today-diff {
+  margin: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+.today-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: -8px;
+}
+.today-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.today-chip {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+}
+.today-chip:hover {
+  background: var(--hover);
+}
+.today-chip.other {
+  border-style: dashed;
+}
+.today-chip.on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+  font-weight: 600;
+}
+.today-chip.on kbd {
+  color: inherit;
+  border-color: currentColor;
+  opacity: 0.7;
+}
+.today-foot,
+.today-finale-btns {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  min-height: 40px;
+}
+.today-foot .link-btn.muted {
+  color: var(--muted);
+}
+.today-note {
+  min-width: 0;
+}
+.today-finale {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+.today-mascot {
+  width: 96px;
+  height: 96px;
+  align-self: center;
+  animation: today-hop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes today-hop {
+  0% {
+    transform: translateY(12px) scale(0.9);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-6px) scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+  }
+}
+.today-finale h2 {
+  margin: 8px 0 0;
+  font-size: 21px;
+}
+.today-finale h2:focus {
+  outline: none;
+}
+.today-finale .hint {
+  margin: 0;
+}
+.today-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.today-stats div {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 8px;
+  border-radius: 10px;
+  background: var(--bg);
+}
+.today-stats b {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.today-stats span {
+  font-size: 12px;
+  color: var(--muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .today-ring circle.fill {
+    transition: none;
+  }
+  .today-mascot {
+    animation: none;
+  }
+}
+
 /* Tidy up topics and tags */
 .tidy-bar {
   display: flex;
@@ -2910,5 +3216,25 @@ button.ov-title:hover {
   .workspace.narrow .sidebar,
   .drawer-scrim {
     animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .today-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .modal.today {
+    width: 100%;
+  }
+  .modal.today > .today-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .modal.today > .today-cards > :nth-child(n + 3) {
+    display: none;
+  }
+  .today-chips kbd,
+  .today-skip kbd,
+  .today-foot kbd {
+    display: none;
   }
 }

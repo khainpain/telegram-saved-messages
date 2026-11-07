@@ -4,6 +4,7 @@ import { useUpdateCheck } from "./useUpdateCheck";
 import { useTelegramAccount } from "./useTelegramAccount";
 import "./App.css";
 import type { Card, Library, UserFields } from "./lib/types";
+import type { Skips, TodayState } from "./lib/today";
 import { effectiveTags, effectiveTopic, findTopic, getOwnTopics, makeEdit, matchesFilter, mergeAlias, NO_ALIASES, setAliases, setOwnTopics, topicName, type Aliases } from "./lib/library";
 import { aiAllowed, appendEdit, DEFAULT_SETTINGS, loadBoardState, loadLibrary, loadSettings, saveBoardState, saveLibrary, saveSettings, wipeAll, type Settings } from "./lib/store";
 import { BOARD_TITLE, sendToTelegram, TelegramAuthError, telegramErrorText, type SendOptions } from "./lib/telegram";
@@ -61,6 +62,8 @@ export default function App() {
   /** Merges tried out in the demo stay in memory, apart from the real ones in settings. */
   const [demoAliases, setDemoAliases] = useState<Aliases>(NO_ALIASES);
   const [demoTopics, setDemoTopics] = useState<string[]>([]);
+  /** "Three for today" in the demo: in memory only, like its merges. */
+  const [demoToday, setDemoToday] = useState<{ today?: TodayState; skips: Skips }>({ skips: {} });
   const demoRef = useRef(demo);
   demoRef.current = demo;
   /** Loading from Telegram already started by itself after sign-in in this launch. */
@@ -586,6 +589,22 @@ export default function App() {
     await saveNames({ topics: ownTopicsNow().filter((t) => topicName(t) !== name) });
   }
 
+  /** Saves today's plan and the tasks set aside: in settings, or only in memory in the demo. */
+  async function saveToday(p: { today?: TodayState; skips?: Skips }) {
+    if (demoRef.current) {
+      setDemoToday((d) => ({ today: p.today ?? d.today, skips: p.skips ?? d.skips }));
+      return;
+    }
+    const s = { ...settingsRef.current, ...(p.today && { today: p.today }), ...(p.skips && { taskSkips: p.skips }) };
+    settingsRef.current = s;
+    setSettings(s);
+    try {
+      await saveSettings(s);
+    } catch (e) {
+      notify(T.app.saveFailed(String(e)));
+    }
+  }
+
   const aliasesNow = () => (demoRef.current ? demoAliases : (settingsRef.current.aliases ?? NO_ALIASES));
   const ownTopicsNow = () => (demoRef.current ? demoTopics : (settingsRef.current.topics ?? []));
 
@@ -715,6 +734,9 @@ export default function App() {
         onCreateTopic={createTopic}
         onRenameTopic={renameTopic}
         onDeleteTopic={deleteTopic}
+        today={demo ? demoToday.today : settings.today}
+        taskSkips={demo ? demoToday.skips : (settings.taskSkips ?? {})}
+        onToday={saveToday}
       />
       {settingsDialog}
       {consentDialog}

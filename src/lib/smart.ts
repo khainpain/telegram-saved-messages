@@ -50,7 +50,7 @@ export function normalizeUrl(raw: string): string {
 const normText = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
 
 /** What makes two cards "the same thing": the link, the file, or a long enough identical text. */
-function dupeKey(c: Card): string | undefined {
+export function dupeKey(c: Card): string | undefined {
   if (c.urls[0]) return `u:${normalizeUrl(c.urls[0])}`;
   const m = c.media;
   if (m?.fileName && m.size) return `f:${m.fileName.toLowerCase()}:${m.size}`;

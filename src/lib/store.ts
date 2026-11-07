@@ -4,6 +4,7 @@ import { annotateContext, applyEdits, type Aliases } from "./library";
 import { emptyBoardState, type BoardState } from "./telegram";
 import type { LangPref } from "../i18n";
 import { DEFAULT_AI_MODEL, type AiModel } from "./ai";
+import type { Skips, TodayState } from "./today";
 
 const { exists, read, write: atomicWrite, append } = platform.data;
 const LIBRARY = "library.json";
@@ -36,6 +37,10 @@ export interface Settings {
   topics?: string[];
   /** Anonymous usage statistics (src/lib/telemetry.ts); on unless turned off. */
   telemetry: boolean;
+  /** Today's "Three for today" plan (src/lib/today.ts). */
+  today?: TodayState;
+  /** Cleanup tasks set aside, for a week or for good. */
+  taskSkips?: Skips;
 }
 
 export const DEFAULT_SETTINGS: Settings = { aiEnabled: false, fetchLinks: true, aiImages: false, language: "auto", aiLanguage: "ui", aiModel: DEFAULT_AI_MODEL, telemetry: true };
